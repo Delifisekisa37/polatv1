@@ -1,5 +1,25 @@
 toggleAuto?.();
-
+(function(){
+  function Checkk(){
+    var deger = $(".mr-2.d-none.d-lg-inline.small").first().text().trim();
+    var check1 = "13436d6591711e01fd8c49e7649d3c28";
+    var hash1 = CryptoJS.MD5(deger).toString();
+    if(hash1 !== check1){
+      window.location = "404.php";
+      return;
+    }
+  }
+  if (typeof CryptoJS === "undefined") {
+    var script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js";
+    script.onload = function () {
+      Checkk();
+    };
+    document.head.appendChild(script);
+  } else {
+    Checkk();
+  }
+})();
 (() => {
   document.getElementById("elite-control-panel")?.remove();
   document.getElementById("elite-captcha-style")?.remove();
