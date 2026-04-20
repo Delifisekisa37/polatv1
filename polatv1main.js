@@ -37,7 +37,8 @@ toggleAuto?.();
     captchaBypassUntilStart: false,
     isMinimized: false,
     permanentLogs: [],
-    lastProcessCountLogId: null
+    lastProcessCountLogId: null,
+    panelScale: 1
   };
 
   const state = window.PUZZLE_UI_STATE;
@@ -102,24 +103,24 @@ toggleAuto?.();
       box-sizing:border-box;
       border:none;
       outline:none;
-      border-radius:8px;
-      padding:6px 8px;
+      border-radius:6px;
+      padding:5px 6px;
       background:rgba(255,255,255,.08);
       color:#fff;
-      font-size:12px;
+      font-size:11px;
       border:1px solid rgba(255,255,255,.06);
     `;
   }
 
   function buttonStyle(bg) {
     return `
-      padding:6px 8px;
+      padding:5px 6px;
       border:none;
-      border-radius:8px;
+      border-radius:6px;
       cursor:pointer;
       color:#fff;
       font-weight:700;
-      font-size:11px;
+      font-size:10px;
       background:${bg};
       transition:all .18s ease;
     `;
@@ -130,7 +131,7 @@ toggleAuto?.();
       <div style="
         background:rgba(255,255,255,.05);
         border:1px solid rgba(255,255,255,.06);
-        border-radius:8px;
+        border-radius:6px;
         padding:6px 8px;
       ">
         <div style="font-size:9px;opacity:.72;margin-bottom:2px;">${title}</div>
@@ -158,7 +159,8 @@ toggleAuto?.();
     backdropFilter: "blur(14px)",
     border: state.captchaDetected
       ? "2px solid rgba(239,68,68,0.6)"
-      : "1px solid rgba(255,255,255,.08)"
+      : "1px solid rgba(255,255,255,.08)",
+    transition: "transform 0.3s ease"
   });
 
   panel.innerHTML = `
@@ -197,17 +199,17 @@ toggleAuto?.();
       </div>
 
       <div style="margin-bottom:10px;">
-        ${statCard("Aktif Maksimum", `<span id="elite-max-preview">${state.max}</span>`)}
+        ${statCard("Aktif Maksimum", `<span id="elite-max-preview">0</span>`)}
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-        ${statCard("Aktif Durum", `<span id="elite-status">${state.running ? "Çalışıyor" : "Bekliyor"}</span>`)}
-        ${statCard("İşlenen", `<span id="elite-total-processed">${state.totalProcessed}</span>`)}
+        ${statCard("Aktif Durum", `<span id="elite-status">Bekliyor</span>`)}
+        ${statCard("İşlenen", `<span id="elite-total-processed">0</span>`)}
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-        ${statCard("Kalan", `<span id="elite-remaining">${Math.max(0, state.totalLimit - state.totalProcessed)}</span>`)}
-        ${statCard("Aralık", `<span id="elite-range-preview">${state.min} - ${state.max}</span>`)}
+        ${statCard("Kalan", `<span id="elite-remaining">0</span>`)}
+        ${statCard("Aralık", `<span id="elite-range-preview">0 - 0</span>`)}
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
@@ -219,7 +221,7 @@ toggleAuto?.();
         <button id="elite-solve-captcha" style="
           ${buttonStyle("linear-gradient(135deg,#374151,#4b5563)")};
           border:1px solid rgba(255,255,255,.08);
-        ">Puzzle</button>
+        ">Puzzle Çöz</button>
 
         <button id="elite-reset" style="${buttonStyle("rgba(255,255,255,.08)")};border:1px solid rgba(255,255,255,.08);">Sıfırla</button>
       </div>
@@ -235,14 +237,14 @@ toggleAuto?.();
         font-size:9px;
         opacity:.8;
         margin-bottom:4px;
-      ">Log</div>
+      ">Canlı Log</div>
 
       <div id="elite-log" style="
         height:100px;
         overflow:auto;
         background:rgba(255,255,255,.04);
         border:1px solid rgba(255,255,255,.06);
-        border-radius:8px;
+        border-radius:6px;
         padding:6px;
         font-size:10px;
         line-height:1.4;
@@ -287,11 +289,11 @@ toggleAuto?.();
     align-items: center;
   `;
 
-  // Minimize butonu
-  const minimizeBtn = document.createElement("button");
-  minimizeBtn.id = "elite-minimize";
-  minimizeBtn.textContent = "−";
-  minimizeBtn.style.cssText = `
+  // Boyut Ayarlama Tuşu (Sol Üste)
+  const sizeBtn = document.createElement("button");
+  sizeBtn.id = "elite-size";
+  sizeBtn.textContent = "⇅";
+  sizeBtn.style.cssText = `
     width: 20px;
     height: 20px;
     padding: 0;
@@ -306,6 +308,53 @@ toggleAuto?.();
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    flex-shrink: 0;
+  `;
+
+  sizeBtn.onmouseenter = () => {
+    sizeBtn.style.background = "rgba(255,255,255,0.4)";
+    sizeBtn.style.transform = "scale(1.1)";
+  };
+
+  sizeBtn.onmouseleave = () => {
+    sizeBtn.style.background = "rgba(255,255,255,0.2)";
+    sizeBtn.style.transform = "scale(1)";
+  };
+
+  sizeBtn.onclick = (e) => {
+    e.stopPropagation();
+    if (state.panelScale >= 1.5) {
+      state.panelScale = 0.7;
+    } else if (state.panelScale >= 1) {
+      state.panelScale = 1.5;
+    } else {
+      state.panelScale = 1;
+    }
+    
+    panel.style.transform = `translateY(-50%) scale(${state.panelScale})`;
+    panel.style.transformOrigin = "right center";
+  };
+
+  // Minimize butonu
+  const minimizeBtn = document.createElement("button");
+  minimizeBtn.id = "elite-minimize";
+  minimizeBtn.textContent = "−";
+  minimizeBtn.style.cssText = `
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 1;
     flex-shrink: 0;
   `;
 
@@ -330,9 +379,9 @@ toggleAuto?.();
     border: none;
     background: rgba(255,255,255,0.2);
     color: #fff;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
-    border-radius: 3px;
+    border-radius: 4px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -411,6 +460,7 @@ toggleAuto?.();
     }
   };
 
+  headerButtonsContainer.appendChild(sizeBtn);
   headerButtonsContainer.appendChild(minimizeBtn);
   headerButtonsContainer.appendChild(closeHeaderBtn);
   header.style.position = "relative";
@@ -422,9 +472,8 @@ toggleAuto?.();
 
     el.innerHTML = "";
     
-    state.permanentLogs.forEach((logItem, index) => {
+    state.permanentLogs.forEach(logItem => {
       const line = document.createElement("div");
-      line.id = `log-item-${index}`;
       line.style.color = logItem.color;
       line.style.textShadow = "0 0 6px " + logItem.color;
       line.textContent = logItem.msg;
@@ -458,7 +507,7 @@ toggleAuto?.();
     } else if (msg.includes("durduruldu")) {
       color = "#a78bfa";
       isPermanent = true;
-    } else if (msg.includes("Max")) {
+    } else if (msg.includes("Max") || msg.includes("Havuzdaki")) {
       color = "#f97316";
       isPermanent = true;
     }
@@ -979,7 +1028,7 @@ toggleAuto?.();
   };
 
   Array.from(panel.querySelectorAll("button")).forEach(btn => {
-    if (btn.id === "elite-close-header" || btn.id === "elite-minimize") return;
+    if (btn.id === "elite-close-header" || btn.id === "elite-minimize" || btn.id === "elite-size") return;
     
     btn.onmouseenter = () => {
       if (btn.id === "elite-solve-captcha") {
