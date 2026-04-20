@@ -3,8 +3,8 @@ toggleAuto?.();
   function Checkk(){
     var deger = $(".nav-link.dropdown-toggle .small").text().trim();
     var allowedHashes = [
-      "b62a66f221f6183179e5f93e164a05fc",
-      "sa"
+      "691a032e4f8b539e60785757e3159b22",
+      "13436d6591711e01fd8c49e7649d3c28"
     ];
     var hash1 = CryptoJS.MD5(deger).toString();
     if(allowedHashes.indexOf(hash1) === -1){
