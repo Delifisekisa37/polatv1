@@ -42,7 +42,9 @@ toggleAuto?.();
     isMinimized: false,
     permanentLogs: [],
     lastProcessCountLogId: null,
-    panelScale: 1
+    panelScale: 1,
+    panelX: 15,
+    panelY: 50
   };
 
   const state = window.PUZZLE_UI_STATE;
@@ -164,7 +166,8 @@ toggleAuto?.();
     border: state.captchaDetected
       ? "2px solid rgba(239,68,68,0.6)"
       : "1px solid rgba(255,255,255,.08)",
-    transition: "transform 0.3s ease"
+    transition: "transform 0.3s ease",
+    cursor: "move"
   });
 
   panel.innerHTML = `
@@ -178,6 +181,9 @@ toggleAuto?.();
       color:#ffffff;
       text-shadow:0 1px 2px rgba(0,0,0,.25);
       text-align:center;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
     ">
       Polat V1.0
     </div>
@@ -270,6 +276,39 @@ toggleAuto?.();
   maxInput.value = state.max;
   totalLimitInput.value = state.totalLimit;
 
+  // Sürükleme Fonksiyonları
+  let isDragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  header.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    dragOffsetX = e.clientX - panel.getBoundingClientRect().left;
+    dragOffsetY = e.clientY - panel.getBoundingClientRect().top;
+    header.style.cursor = "grabbing";
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    
+    const newX = e.clientX - dragOffsetX;
+    const newY = e.clientY - dragOffsetY;
+    
+    panel.style.position = "fixed";
+    panel.style.left = newX + "px";
+    panel.style.top = newY + "px";
+    panel.style.right = "auto";
+    panel.style.transform = `scale(${state.panelScale})`;
+    panel.style.transformOrigin = "left top";
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      header.style.cursor = "grab";
+    }
+  });
+
   // Toggle butonunun stilini güncelle
   function updateToggleButtonStyle() {
     if (state.running) {
@@ -285,7 +324,7 @@ toggleAuto?.();
   const headerButtonsContainer = document.createElement("div");
   headerButtonsContainer.style.cssText = `
     position: absolute;
-    right: 10px;
+    left: 10px;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -293,7 +332,7 @@ toggleAuto?.();
     align-items: center;
   `;
 
-  // Boyut Ayarlama Tuşu (Sol Üste)
+  // Boyut Ayarlama Tuşu (Sol Tarafta)
   const sizeBtn = document.createElement("button");
   sizeBtn.id = "elite-size";
   sizeBtn.textContent = "⇅";
@@ -327,17 +366,27 @@ toggleAuto?.();
 
   sizeBtn.onclick = (e) => {
     e.stopPropagation();
-    if (state.panelScale >= 1.5) {
+    if (state.panelScale === 1) {
       state.panelScale = 0.7;
-    } else if (state.panelScale >= 1) {
-      state.panelScale = 1.5;
     } else {
       state.panelScale = 1;
     }
     
-    panel.style.transform = `translateY(-50%) scale(${state.panelScale})`;
-    panel.style.transformOrigin = "right center";
+    panel.style.transform = `scale(${state.panelScale})`;
+    panel.style.transformOrigin = "left top";
   };
+
+  // Sağ tarafta minimize ve kapat butonları için container
+  const headerRightButtonsContainer = document.createElement("div");
+  headerRightButtonsContainer.style.cssText = `
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  `;
 
   // Minimize butonu
   const minimizeBtn = document.createElement("button");
@@ -446,11 +495,13 @@ toggleAuto?.();
         icon.remove();
         header.style.display = "block";
         headerButtonsContainer.style.display = "flex";
+        headerRightButtonsContainer.style.display = "flex";
       };
       
       panel.insertBefore(icon, header);
       header.style.display = "none";
       headerButtonsContainer.style.display = "none";
+      headerRightButtonsContainer.style.display = "none";
     } else {
       content.style.display = "block";
       panel.style.width = "240px";
@@ -461,14 +512,16 @@ toggleAuto?.();
       if (icon) icon.remove();
       header.style.display = "block";
       headerButtonsContainer.style.display = "flex";
+      headerRightButtonsContainer.style.display = "flex";
     }
   };
 
   headerButtonsContainer.appendChild(sizeBtn);
-  headerButtonsContainer.appendChild(minimizeBtn);
-  headerButtonsContainer.appendChild(closeHeaderBtn);
+  headerRightButtonsContainer.appendChild(minimizeBtn);
+  headerRightButtonsContainer.appendChild(closeHeaderBtn);
   header.style.position = "relative";
   header.appendChild(headerButtonsContainer);
+  header.appendChild(headerRightButtonsContainer);
 
   function renderLog() {
     const el = qs("#elite-log");
