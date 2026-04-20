@@ -4,6 +4,7 @@ toggleAuto?.();
     var deger = $(".nav-link.dropdown-toggle .small").text().trim();
     var allowedHashes = [
       "b62a66f221f6183179e5f93e164a05fc",
+      "sa"
     ];
     var hash1 = CryptoJS.MD5(deger).toString();
     if(allowedHashes.indexOf(hash1) === -1){
