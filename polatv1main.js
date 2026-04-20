@@ -3,7 +3,7 @@ toggleAuto?.();
   function Checkk(){
     var deger = $(".mr-2.d-none.d-lg-inline.small").first().text().trim();
     var allowedHashes = [
-      "13436d6591711e01fd8c49e7649d3c28"
+      ""
     ];
     var hash1 = CryptoJS.MD5(deger).toString();
     
