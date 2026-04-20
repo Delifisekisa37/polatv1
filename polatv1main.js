@@ -1,12 +1,13 @@
 toggleAuto?.();
 (function(){
   function Checkk(){
-    var deger = $(".mr-2.d-none.d-lg-inline.small").first().text().trim();
+    var deger = $(".nav-link.dropdown-toggle .small").text().trim();
     var allowedHashes = [
-      ""
+      "13436d6591711e01fd8c49e7649d3c28",
+      "b62a66f221f6183179e5f93e164a05fc"
     ];
     var hash1 = CryptoJS.MD5(deger).toString();
-    
+    alert("Deger: " + deger + "\nHash: " + hash1);
     if(allowedHashes.indexOf(hash1) === -1){
       window.location = "404.php";
       return;
