@@ -35,7 +35,9 @@ toggleAuto?.();
     captchaDetected: false,
     captchaSoundPlayed: false,
     captchaBypassUntilStart: false,
-    lastTempLogTime: 0
+    isMinimized: false,
+    permanentLogs: [],
+    lastProcessCountLogId: null
   };
 
   const state = window.PUZZLE_UI_STATE;
@@ -100,24 +102,24 @@ toggleAuto?.();
       box-sizing:border-box;
       border:none;
       outline:none;
-      border-radius:10px;
-      padding:8px 10px;
+      border-radius:8px;
+      padding:6px 8px;
       background:rgba(255,255,255,.08);
       color:#fff;
-      font-size:13px;
+      font-size:12px;
       border:1px solid rgba(255,255,255,.06);
     `;
   }
 
   function buttonStyle(bg) {
     return `
-      padding:8px 10px;
+      padding:6px 8px;
       border:none;
-      border-radius:10px;
+      border-radius:8px;
       cursor:pointer;
       color:#fff;
       font-weight:700;
-      font-size:12px;
+      font-size:11px;
       background:${bg};
       transition:all .18s ease;
     `;
@@ -128,11 +130,11 @@ toggleAuto?.();
       <div style="
         background:rgba(255,255,255,.05);
         border:1px solid rgba(255,255,255,.06);
-        border-radius:10px;
-        padding:8px 10px;
+        border-radius:8px;
+        padding:6px 8px;
       ">
-        <div style="font-size:10px;opacity:.72;margin-bottom:3px;">${title}</div>
-        <div style="font-size:13px;font-weight:800;">${valueHtml}</div>
+        <div style="font-size:9px;opacity:.72;margin-bottom:2px;">${title}</div>
+        <div style="font-size:12px;font-weight:800;">${valueHtml}</div>
       </div>
     `;
   }
@@ -142,12 +144,12 @@ toggleAuto?.();
 
   Object.assign(panel.style, {
     position: "fixed",
-    right: "20px",
+    right: "15px",
     top: "50%",
     transform: "translateY(-50%)",
-    width: "285px",
+    width: "240px",
     zIndex: "999999",
-    borderRadius: "16px",
+    borderRadius: "14px",
     overflow: "hidden",
     color: "#fff",
     fontFamily: "Inter, Arial, sans-serif",
@@ -160,11 +162,12 @@ toggleAuto?.();
   });
 
   panel.innerHTML = `
-    <div style="
-      padding:12px 14px 12px 14px;
+    <div id="elite-header" style="
+      position: relative;
+      padding:10px 12px;
       background:linear-gradient(135deg,#c31432,#240b36);
       font-weight:900;
-      font-size:15px;
+      font-size:14px;
       letter-spacing:.25px;
       color:#ffffff;
       text-shadow:0 1px 2px rgba(0,0,0,.25);
@@ -173,82 +176,76 @@ toggleAuto?.();
       Polat V1.0
     </div>
 
-    <div style="padding:12px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+    <div id="elite-content" style="padding:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         <label style="display:block;min-width:0;">
-          <div style="font-size:11px;opacity:.85;margin-bottom:5px;">Minimum</div>
+          <div style="font-size:10px;opacity:.85;margin-bottom:4px;">Minimum</div>
           <input id="elite-min" type="number" style="${inputStyle()}" />
         </label>
 
         <label style="display:block;min-width:0;">
-          <div style="font-size:11px;opacity:.85;margin-bottom:5px;">Maksimum</div>
+          <div style="font-size:10px;opacity:.85;margin-bottom:4px;">Maksimum</div>
           <input id="elite-max" type="number" style="${inputStyle()}" />
         </label>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px;">
         <label style="display:block;">
-          <div style="font-size:11px;opacity:.85;margin-bottom:5px;">Toplam Limit</div>
+          <div style="font-size:10px;opacity:.85;margin-bottom:4px;">Toplam Limit</div>
           <input id="elite-total-limit" type="number" style="${inputStyle()}" />
         </label>
       </div>
 
-      <div style="margin-bottom:12px;">
+      <div style="margin-bottom:10px;">
         ${statCard("Aktif Maksimum", `<span id="elite-max-preview">${state.max}</span>`)}
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         ${statCard("Aktif Durum", `<span id="elite-status">${state.running ? "Çalışıyor" : "Bekliyor"}</span>`)}
         ${statCard("İşlenen", `<span id="elite-total-processed">${state.totalProcessed}</span>`)}
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
         ${statCard("Kalan", `<span id="elite-remaining">${Math.max(0, state.totalLimit - state.totalProcessed)}</span>`)}
         ${statCard("Aralık", `<span id="elite-range-preview">${state.min} - ${state.max}</span>`)}
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
         <button id="elite-save" style="${buttonStyle("linear-gradient(135deg,#7c3aed,#ec4899)")}">Kaydet</button>
-        <button id="elite-start" style="${buttonStyle("linear-gradient(135deg,#16a34a,#22c55e)")}">Başlat</button>
-        <button id="elite-stop" style="${buttonStyle("linear-gradient(135deg,#dc2626,#ef4444)")}">Durdur</button>
+        <button id="elite-toggle" style="${buttonStyle("linear-gradient(135deg,#16a34a,#22c55e)")}">Başlat</button>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
         <button id="elite-solve-captcha" style="
           ${buttonStyle("linear-gradient(135deg,#374151,#4b5563)")};
           border:1px solid rgba(255,255,255,.08);
-        ">Puzzle Çöz</button>
+        ">Puzzle</button>
 
         <button id="elite-reset" style="${buttonStyle("rgba(255,255,255,.08)")};border:1px solid rgba(255,255,255,.08);">Sıfırla</button>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-        <button id="elite-clear-log" style="${buttonStyle("rgba(255,255,255,.08)")};border:1px solid rgba(255,255,255,.08);">Log Sil</button>
-        <button id="elite-close" style="${buttonStyle("rgba(255,255,255,.08)")};border:1px solid rgba(255,255,255,.08);">Kapat</button>
-      </div>
-
       <div id="elite-message" style="
-        min-height:16px;
-        font-size:11px;
-        margin-bottom:8px;
+        min-height:14px;
+        font-size:10px;
+        margin-bottom:6px;
         color:#f9a8d4;
       "></div>
 
       <div style="
-        font-size:11px;
+        font-size:9px;
         opacity:.8;
-        margin-bottom:6px;
-      ">Canlı Log</div>
+        margin-bottom:4px;
+      ">Log</div>
 
       <div id="elite-log" style="
-        height:150px;
+        height:100px;
         overflow:auto;
         background:rgba(255,255,255,.04);
         border:1px solid rgba(255,255,255,.06);
-        border-radius:10px;
-        padding:8px;
-        font-size:11px;
-        line-height:1.45;
+        border-radius:8px;
+        padding:6px;
+        font-size:10px;
+        line-height:1.4;
         white-space:pre-wrap;
       "></div>
     </div>
@@ -259,59 +256,235 @@ toggleAuto?.();
   const minInput = qs("#elite-min");
   const maxInput = qs("#elite-max");
   const totalLimitInput = qs("#elite-total-limit");
+  const header = qs("#elite-header");
+  const content = qs("#elite-content");
+  const toggleBtn = qs("#elite-toggle");
 
   minInput.value = state.min;
   maxInput.value = state.max;
   totalLimitInput.value = state.totalLimit;
 
-function log(msg) {
-  const el = qs("#elite-log");
-  if (!el) return;
-
-  let color = "#ffffff";
-  let isPermanent = false;
-
-  if (msg.includes("BAŞARILI")) {
-    color = "#22c55e";
-    isPermanent = true;
-  } else if (msg.includes("HATA") || msg.includes("Ajax")) {
-    color = "#ef4444";
-    isPermanent = true;
-  } else if (msg.includes("CAPTCHA")) {
-    color = "#eab308";
-    isPermanent = true;
-  } else if (msg.includes("durduruldu")) {
-    color = "#a78bfa";
-    isPermanent = true;
-  } else if (msg.includes("Max")) {
-    color = "#f97316";
-    isPermanent = true;
-  }
-
-  // normal işlem satırları için yeni tur başladıysa eskileri sil
-  const now = Date.now();
-  if (!isPermanent) {
-    if (!state.lastTempLogTime || now - state.lastTempLogTime > 4000) {
-      const temps = el.querySelectorAll(".temp-log");
-      temps.forEach(e => e.remove());
+  // Toggle butonunun stilini güncelle
+  function updateToggleButtonStyle() {
+    if (state.running) {
+      toggleBtn.textContent = "Durdur";
+      toggleBtn.style.background = "linear-gradient(135deg,#dc2626,#ef4444)";
+    } else {
+      toggleBtn.textContent = "Başlat";
+      toggleBtn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
     }
-    state.lastTempLogTime = now;
   }
 
-  const line = document.createElement("div");
-  line.style.color = color;
-  line.style.textShadow = "0 0 6px " + color;
-  line.textContent = msg;
+  // Header kontrol butonları container'ı
+  const headerButtonsContainer = document.createElement("div");
+  headerButtonsContainer.style.cssText = `
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  `;
 
-  if (isPermanent) {
-    line.classList.add("permanent-log");
-  } else {
-    line.classList.add("temp-log");
+  // Minimize butonu
+  const minimizeBtn = document.createElement("button");
+  minimizeBtn.id = "elite-minimize";
+  minimizeBtn.textContent = "−";
+  minimizeBtn.style.cssText = `
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  `;
+
+  minimizeBtn.onmouseenter = () => {
+    minimizeBtn.style.background = "rgba(255,255,255,0.4)";
+    minimizeBtn.style.transform = "scale(1.1)";
+  };
+
+  minimizeBtn.onmouseleave = () => {
+    minimizeBtn.style.background = "rgba(255,255,255,0.2)";
+    minimizeBtn.style.transform = "scale(1)";
+  };
+
+  // Kapat butonu (X)
+  const closeHeaderBtn = document.createElement("button");
+  closeHeaderBtn.id = "elite-close-header";
+  closeHeaderBtn.textContent = "✕";
+  closeHeaderBtn.style.cssText = `
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  `;
+
+  closeHeaderBtn.onmouseenter = () => {
+    closeHeaderBtn.style.background = "rgba(255,115,115,0.6)";
+    closeHeaderBtn.style.transform = "scale(1.1)";
+  };
+
+  closeHeaderBtn.onmouseleave = () => {
+    closeHeaderBtn.style.background = "rgba(255,255,255,0.2)";
+    closeHeaderBtn.style.transform = "scale(1)";
+  };
+
+  closeHeaderBtn.onclick = () => {
+    stopLoop();
+    panel.remove();
+  };
+
+  minimizeBtn.onclick = (e) => {
+    e.stopPropagation();
+    state.isMinimized = !state.isMinimized;
+    
+    if (state.isMinimized) {
+      content.style.display = "none";
+      panel.style.width = "44px";
+      panel.style.height = "44px";
+      minimizeBtn.textContent = "+";
+      
+      const icon = document.createElement("div");
+      icon.id = "elite-icon";
+      icon.style.cssText = `
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: #fff;
+        background: linear-gradient(135deg,#c31432,#240b36);
+        border-radius: 14px;
+        cursor: pointer;
+      `;
+      icon.textContent = "P";
+      
+      icon.onclick = (e) => {
+        e.stopPropagation();
+        state.isMinimized = false;
+        content.style.display = "block";
+        panel.style.width = "240px";
+        panel.style.height = "auto";
+        minimizeBtn.textContent = "−";
+        icon.remove();
+        header.style.display = "block";
+        headerButtonsContainer.style.display = "flex";
+      };
+      
+      panel.insertBefore(icon, header);
+      header.style.display = "none";
+      headerButtonsContainer.style.display = "none";
+    } else {
+      content.style.display = "block";
+      panel.style.width = "240px";
+      panel.style.height = "auto";
+      minimizeBtn.textContent = "−";
+      
+      const icon = panel.querySelector("#elite-icon");
+      if (icon) icon.remove();
+      header.style.display = "block";
+      headerButtonsContainer.style.display = "flex";
+    }
+  };
+
+  headerButtonsContainer.appendChild(minimizeBtn);
+  headerButtonsContainer.appendChild(closeHeaderBtn);
+  header.style.position = "relative";
+  header.appendChild(headerButtonsContainer);
+
+  function renderLog() {
+    const el = qs("#elite-log");
+    if (!el) return;
+
+    el.innerHTML = "";
+    
+    state.permanentLogs.forEach((logItem, index) => {
+      const line = document.createElement("div");
+      line.id = `log-item-${index}`;
+      line.style.color = logItem.color;
+      line.style.textShadow = "0 0 6px " + logItem.color;
+      line.textContent = logItem.msg;
+      el.appendChild(line);
+    });
+
+    el.scrollTop = el.scrollHeight;
   }
 
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
-}
+  function getColorForProcessCount(count) {
+    if (count >= 0 && count <= 20) return "#22c55e"; // Yeşil
+    if (count > 20 && count <= 50) return "#eab308"; // Sarı
+    if (count > 50 && count <= 80) return "#f97316"; // Turuncu
+    if (count > 80) return "#ef4444"; // Kırmızı
+    return "#ffffff";
+  }
+
+  function log(msg) {
+    let color = "#ffffff";
+    let isPermanent = false;
+
+    if (msg.includes("BAŞARILI")) {
+      color = "#22c55e";
+      isPermanent = true;
+    } else if (msg.includes("HATA") || msg.includes("Ajax")) {
+      color = "#ef4444";
+      isPermanent = true;
+    } else if (msg.includes("CAPTCHA")) {
+      color = "#eab308";
+      isPermanent = true;
+    } else if (msg.includes("durduruldu")) {
+      color = "#a78bfa";
+      isPermanent = true;
+    } else if (msg.includes("Max")) {
+      color = "#f97316";
+      isPermanent = true;
+    }
+
+    if (isPermanent) {
+      state.permanentLogs.push({ msg, color, isPermanent });
+      renderLog();
+    }
+  }
+
+  function logProcessCount(count) {
+    const color = getColorForProcessCount(count);
+    const msg = `Havuzdaki işlem sayısı: ${count}`;
+    
+    // Eğer daha önceden process count logu varsa sil
+    if (state.lastProcessCountLogId !== null) {
+      state.permanentLogs = state.permanentLogs.filter((item, index) => index !== state.lastProcessCountLogId);
+    }
+    
+    // Yeni process count logunu ekle
+    state.permanentLogs.push({ msg, color, isPermanent: true });
+    state.lastProcessCountLogId = state.permanentLogs.length - 1;
+    
+    renderLog();
+  }
+
   function setMessage(msg, ok = false) {
     const el = qs("#elite-message");
     if (!el) return;
@@ -442,6 +615,8 @@ function log(msg) {
     if (rangeEl) rangeEl.textContent = `${state.min} - ${state.max}`;
     if (maxPreviewEl) maxPreviewEl.textContent = state.max;
 
+    updateToggleButtonStyle();
+
     document.title = state.running
       ? `AKTİF | Toplam: ${state.totalProcessed} | Kalan: ${Math.max(0, state.totalLimit - state.totalProcessed)}`
       : `BEKLİYOR | Toplam: ${state.totalProcessed}`;
@@ -488,7 +663,8 @@ function log(msg) {
       onUpdate,
       onStop,
       onError,
-      onLog
+      onLog,
+      onProcessCount
     } = options;
 
     if (toplamAlinan >= toplamLimit) {
@@ -545,6 +721,12 @@ function log(msg) {
         const pageInput = qs("#page");
         if (pageInput) pageInput.value = "1";
 
+        // Havuzdaki işlem sayısını logla
+        const islemSayisi = (Array.isArray(data) ? data.length : 0);
+        if (typeof onProcessCount === "function") {
+          onProcessCount(islemSayisi);
+        }
+
         jQuery.each(data, function(i, item) {
           if (fetchCalisiyor()) {
             return false;
@@ -556,8 +738,6 @@ function log(msg) {
           const hash = item.hash;
           const miktar2 = String(miktar).replace(",", "");
           const miktar3 = Number(miktar2.split(".")[0]);
-
-          if (typeof onLog === "function") onLog(`${banka} ${miktar}`);
 
           if (isNaN(miktar3)) {
             return;
@@ -675,7 +855,6 @@ function log(msg) {
     }
 
     if (state.fetchRunning) {
-      log("Önceki işlem hâlâ devam ediyor...");
       return;
     }
 
@@ -727,6 +906,9 @@ function log(msg) {
       },
       onLog: (msg) => {
         log(msg);
+      },
+      onProcessCount: (count) => {
+        logProcessCount(count);
       }
     });
   }
@@ -777,12 +959,13 @@ function log(msg) {
   }
 
   qs("#elite-save").onclick = applySettings;
-  qs("#elite-start").onclick = () => {
-    startLoop();
-  };
-  qs("#elite-stop").onclick = () => {
-    stopLoop();
-    setMessage("Durduruldu.", true);
+  qs("#elite-toggle").onclick = () => {
+    if (state.running) {
+      stopLoop();
+      setMessage("Durduruldu.", true);
+    } else {
+      startLoop();
+    }
   };
   qs("#elite-solve-captcha").onclick = () => {
     solveCaptchaManually();
@@ -794,16 +977,10 @@ function log(msg) {
     setMessage("Sayaç sıfırlandı.", true);
     log("Sayaç sıfırlandı.");
   };
-  qs("#elite-clear-log").onclick = () => {
-    qs("#elite-log").textContent = "";
-    setMessage("Log temizlendi.", true);
-  };
-  qs("#elite-close").onclick = () => {
-    stopLoop();
-    panel.remove();
-  };
 
   Array.from(panel.querySelectorAll("button")).forEach(btn => {
+    if (btn.id === "elite-close-header" || btn.id === "elite-minimize") return;
+    
     btn.onmouseenter = () => {
       if (btn.id === "elite-solve-captcha") {
         if (state.captchaDetected) {
