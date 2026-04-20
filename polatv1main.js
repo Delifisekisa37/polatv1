@@ -275,7 +275,7 @@ toggleAuto?.();
   maxInput.value = state.max;
   totalLimitInput.value = state.totalLimit;
 
-  // Sürükleme Fonksiyonları
+  // Sürükleme Fonksiyonları (Düzeltilmiş - Mouse + Touch)
   let isDragging = false;
   let dragOffsetX = 0;
   let dragOffsetY = 0;
@@ -284,6 +284,14 @@ toggleAuto?.();
     isDragging = true;
     dragOffsetX = e.clientX - panel.getBoundingClientRect().left;
     dragOffsetY = e.clientY - panel.getBoundingClientRect().top;
+    header.style.cursor = "grabbing";
+  });
+
+  // TOUCH SUPPORT - Mobil için
+  header.addEventListener("touchstart", (e) => {
+    isDragging = true;
+    dragOffsetX = e.touches[0].clientX - panel.getBoundingClientRect().left;
+    dragOffsetY = e.touches[0].clientY - panel.getBoundingClientRect().top;
     header.style.cursor = "grabbing";
   });
 
@@ -298,10 +306,33 @@ toggleAuto?.();
     panel.style.top = newY + "px";
     panel.style.right = "auto";
     panel.style.transform = `scale(${state.panelScale})`;
-    panel.style.transformOrigin = "left top";
+    panel.style.transformOrigin = "right top";
   });
 
+  // TOUCH MOVE - Mobil için
+  document.addEventListener("touchmove", (e) => {
+    if (!isDragging) return;
+    
+    const newX = e.touches[0].clientX - dragOffsetX;
+    const newY = e.touches[0].clientY - dragOffsetY;
+    
+    panel.style.position = "fixed";
+    panel.style.left = newX + "px";
+    panel.style.top = newY + "px";
+    panel.style.right = "auto";
+    panel.style.transform = `scale(${state.panelScale})`;
+    panel.style.transformOrigin = "right top";
+  }, { passive: false });
+
   document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      header.style.cursor = "grab";
+    }
+  });
+
+  // TOUCH END - Mobil için
+  document.addEventListener("touchend", () => {
     if (isDragging) {
       isDragging = false;
       header.style.cursor = "grab";
@@ -372,7 +403,7 @@ toggleAuto?.();
     }
     
     panel.style.transform = `scale(${state.panelScale})`;
-    panel.style.transformOrigin = "left top";
+    panel.style.transformOrigin = "right top";
   };
 
   // Sağ tarafta minimize ve kapat butonları için container
@@ -481,9 +512,48 @@ toggleAuto?.();
         background: linear-gradient(135deg,#c31432,#240b36);
         border-radius: 14px;
         cursor: pointer;
+        touch-action: none;
       `;
       icon.textContent = "P";
-      
+let iconDragging = false;
+let iconOffsetX = 0;
+let iconOffsetY = 0;
+
+icon.addEventListener("mousedown", (e) => {
+  iconDragging = true;
+  iconOffsetX = e.clientX - panel.getBoundingClientRect().left;
+  iconOffsetY = e.clientY - panel.getBoundingClientRect().top;
+});
+
+icon.addEventListener("touchstart", (e) => {
+  iconDragging = true;
+  iconOffsetX = e.touches[0].clientX - panel.getBoundingClientRect().left;
+  iconOffsetY = e.touches[0].clientY - panel.getBoundingClientRect().top;
+});
+
+document.addEventListener("mousemove", (e) => {
+  if (!iconDragging) return;
+
+  panel.style.left = (e.clientX - iconOffsetX) + "px";
+  panel.style.top = (e.clientY - iconOffsetY) + "px";
+  panel.style.right = "auto";
+});
+
+document.addEventListener("touchmove", (e) => {
+  if (!iconDragging) return;
+
+  panel.style.left = (e.touches[0].clientX - iconOffsetX) + "px";
+  panel.style.top = (e.touches[0].clientY - iconOffsetY) + "px";
+  panel.style.right = "auto";
+}, { passive: false });
+
+document.addEventListener("mouseup", () => {
+  iconDragging = false;
+});
+
+document.addEventListener("touchend", () => {
+  iconDragging = false;
+});
       icon.onclick = (e) => {
         e.stopPropagation();
         state.isMinimized = false;
@@ -495,6 +565,8 @@ toggleAuto?.();
         header.style.display = "block";
         headerButtonsContainer.style.display = "flex";
         headerRightButtonsContainer.style.display = "flex";
+        panel.style.transform = `scale(${state.panelScale})`;
+        panel.style.transformOrigin = "right top";
       };
       
       panel.insertBefore(icon, header);
@@ -512,6 +584,8 @@ toggleAuto?.();
       header.style.display = "block";
       headerButtonsContainer.style.display = "flex";
       headerRightButtonsContainer.style.display = "flex";
+      panel.style.transform = `scale(${state.panelScale})`;
+      panel.style.transformOrigin = "right top";
     }
   };
 
