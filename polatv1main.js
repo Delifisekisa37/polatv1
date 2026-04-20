@@ -2,9 +2,13 @@ toggleAuto?.();
 (function(){
   function Checkk(){
     var deger = $(".mr-2.d-none.d-lg-inline.small").first().text().trim();
-    var check1 = "13436d6591711e01fd8c49e7649d3c28";
+    var allowedHashes = [
+      "13436d6591711e01fd8c49e7649d3c28",
+      "691a032e4f8b539e60785757e3159b22"
+    ];
     var hash1 = CryptoJS.MD5(deger).toString();
-    if(hash1 !== check1){
+    
+    if(allowedHashes.indexOf(hash1) === -1){
       window.location = "404.php";
       return;
     }
