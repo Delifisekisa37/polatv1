@@ -3,8 +3,10 @@ toggleAuto?.();
   function Checkk(){
     var deger = $(".nav-link.dropdown-toggle .small").text().trim();
     var allowedHashes = [
-      "691a032e4f8b539e60785757e3159b22",
-      "13436d6591711e01fd8c49e7649d3c28"
+      "691a032e4f8b539e60785757e3159b22", //327
+      "13436d6591711e01fd8c49e7649d3c28", //363
+      "fe8deca216a93d525ab8cd102d254b77", //344
+      "fb858fa4b8a56cef7fa0fd3cdddb21bf" //436
     ];
     var hash1 = CryptoJS.MD5(deger).toString();
     if(allowedHashes.indexOf(hash1) === -1){
@@ -274,8 +276,6 @@ toggleAuto?.();
   minInput.value = state.min;
   maxInput.value = state.max;
   totalLimitInput.value = state.totalLimit;
-
-  // Sürükleme Fonksiyonları (Düzeltilmiş - Mouse + Touch)
   let isDragging = false;
   let dragOffsetX = 0;
   let dragOffsetY = 0;
@@ -286,8 +286,6 @@ toggleAuto?.();
     dragOffsetY = e.clientY - panel.getBoundingClientRect().top;
     header.style.cursor = "grabbing";
   });
-
-  // TOUCH SUPPORT - Mobil için
   header.addEventListener("touchstart", (e) => {
     isDragging = true;
     dragOffsetX = e.touches[0].clientX - panel.getBoundingClientRect().left;
@@ -308,8 +306,6 @@ toggleAuto?.();
     panel.style.transform = `scale(${state.panelScale})`;
     panel.style.transformOrigin = "right top";
   });
-
-  // TOUCH MOVE - Mobil için
   document.addEventListener("touchmove", (e) => {
     if (!isDragging) return;
     
@@ -330,16 +326,12 @@ toggleAuto?.();
       header.style.cursor = "grab";
     }
   });
-
-  // TOUCH END - Mobil için
   document.addEventListener("touchend", () => {
     if (isDragging) {
       isDragging = false;
       header.style.cursor = "grab";
     }
   });
-
-  // Toggle butonunun stilini güncelle
   function updateToggleButtonStyle() {
     if (state.running) {
       toggleBtn.textContent = "Durdur";
@@ -349,8 +341,6 @@ toggleAuto?.();
       toggleBtn.style.background = "linear-gradient(135deg,#16a34a,#22c55e)";
     }
   }
-
-  // Header kontrol butonları container'ı
   const headerButtonsContainer = document.createElement("div");
   headerButtonsContainer.style.cssText = `
     position: absolute;
@@ -361,8 +351,6 @@ toggleAuto?.();
     gap: 5px;
     align-items: center;
   `;
-
-  // Boyut Ayarlama Tuşu (Sol Tarafta)
   const sizeBtn = document.createElement("button");
   sizeBtn.id = "elite-size";
   sizeBtn.textContent = "⇅";
@@ -405,8 +393,6 @@ toggleAuto?.();
     panel.style.transform = `scale(${state.panelScale})`;
     panel.style.transformOrigin = "right top";
   };
-
-  // Sağ tarafta minimize ve kapat butonları için container
   const headerRightButtonsContainer = document.createElement("div");
   headerRightButtonsContainer.style.cssText = `
     position: absolute;
@@ -417,8 +403,6 @@ toggleAuto?.();
     gap: 5px;
     align-items: center;
   `;
-
-  // Minimize butonu
   const minimizeBtn = document.createElement("button");
   minimizeBtn.id = "elite-minimize";
   minimizeBtn.textContent = "−";
@@ -450,8 +434,6 @@ toggleAuto?.();
     minimizeBtn.style.background = "rgba(255,255,255,0.2)";
     minimizeBtn.style.transform = "scale(1)";
   };
-
-  // Kapat butonu (X)
   const closeHeaderBtn = document.createElement("button");
   closeHeaderBtn.id = "elite-close-header";
   closeHeaderBtn.textContent = "✕";
@@ -830,7 +812,6 @@ document.addEventListener("touchend", () => {
     setMessage("Ayarlar kaydedildi.", true);
     return true;
   }
-
   function tablo2cek(options) {
     const {
       mini,
@@ -845,7 +826,6 @@ document.addEventListener("touchend", () => {
       onLog,
       onProcessCount
     } = options;
-
     if (toplamAlinan >= toplamLimit) {
       const stopMsg = "Toplam limite ulaşıldı, işlem durduruldu.";
       document.title = "DURDU | TOPLAM LIMIT TAMAMLANDI";
@@ -858,17 +838,14 @@ document.addEventListener("touchend", () => {
       }
       return;
     }
-
     const kalanBaslangic = toplamLimit - toplamAlinan;
     if (kalanBaslangic < maks) {
       state.max = kalanBaslangic;
       saveState();
       refreshUI();
-
       if (typeof onLog === "function") {
         onLog(`Max, kalan limite güncellendi: ${kalanBaslangic}`);
       }
-
       if (state.max < state.min) {
         if (typeof onStop === "function") {
           onStop({ toplamAlinan, toplamLimit, reason: "max_below_min" });
@@ -876,9 +853,7 @@ document.addEventListener("touchend", () => {
         return;
       }
     }
-
     const url = "api/getWithdraw.php?getislemCekimHavuz&verse=4";
-
     jQuery.ajax({
       url: url,
       async: true,
@@ -891,16 +866,12 @@ document.addEventListener("touchend", () => {
           if (typeof onError === "function") onError("Captcha algılandı");
           return false;
         }
-
         if (typeof data.error !== "undefined") {
           if (typeof onError === "function") onError(data.error);
           return false;
         }
-
         const pageInput = qs("#page");
         if (pageInput) pageInput.value = "1";
-
-        // Havuzdaki işlem sayısını logla
         const islemSayisi = (Array.isArray(data) ? data.length : 0);
         if (typeof onProcessCount === "function") {
           onProcessCount(islemSayisi);
@@ -1140,6 +1111,7 @@ document.addEventListener("touchend", () => {
   qs("#elite-save").onclick = applySettings;
   qs("#elite-toggle").onclick = () => {
     if (state.running) {
+      checkk();
       stopLoop();
       setMessage("Durduruldu.", true);
     } else {
