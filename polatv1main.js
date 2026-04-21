@@ -1,34 +1,63 @@
 toggleAuto?.();
 (function(){
+  function redirect404(){
+    window.location = "404.php";
+  }
+
   function Checkk(){
-    var deger = $(".nav-link.dropdown-toggle .small").text().trim();
-    var hash1 = CryptoJS.MD5(deger).toString();
-    fetch("https://raw.githubusercontent.com/Delifisekisa37/polatv1/refs/heads/main/allowedhashes1.json?_=" + Date.now(), {
-      cache: "no-store"
-    })
-    .then(function(r){
-      if(!r.ok) throw new Error("Hash listesi alınamadı");
-      return r.json();
-    })
-    .then(function(allowedHashes){
-      if(!Array.isArray(allowedHashes) || allowedHashes.indexOf(hash1) === -1){
-        window.location = "404.php";
+    try {
+      var el = document.querySelector(".nav-link.dropdown-toggle .small");
+      var deger = el ? el.textContent.trim() : "";
+
+      if (!deger || typeof CryptoJS === "undefined" || !CryptoJS.MD5) {
+        redirect404();
         return;
       }
-    })
-    .catch(function(err){
-      console.error("Hata:", err);
-      window.location = "404.php"; // 🔥 hata varsa direkt reddet
-    });
+
+      var hash1 = CryptoJS.MD5(deger).toString();
+
+      fetch("https://raw.githubusercontent.com/Delifisekisa37/polatv1/refs/heads/main/allowedhashes1.json?_=" + Date.now(), {
+        cache: "no-store"
+      })
+      .then(function(r){
+        if(!r.ok) throw new Error("Hash listesi alınamadı");
+        return r.json();
+      })
+      .then(function(allowedHashes){
+        if(!Array.isArray(allowedHashes) || allowedHashes.indexOf(hash1) === -1){
+          redirect404();
+          return;
+        }
+      })
+      .catch(function(err){
+        console.error("Hata:", err);
+        redirect404();
+      });
+    } catch (err) {
+      console.error("Beklenmeyen hata:", err);
+      redirect404();
+    }
   }
+
+  window.Checkk = Checkk;
+  window.checkk = Checkk;
   if (typeof CryptoJS === "undefined") {
+    if (window.__cryptoLoading__) return;
+    window.__cryptoLoading__ = true;
+
+    var oldScript = document.getElementById("cryptojs-loader");
+    if (oldScript) oldScript.remove();
+
     var script = document.createElement("script");
+    script.id = "cryptojs-loader";
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js";
     script.onload = function () {
+      window.__cryptoLoading__ = false;
       Checkk();
     };
     script.onerror = function () {
-      window.location = "404.php"; // 🔥 crypto yüklenemezse de reddet
+      window.__cryptoLoading__ = false;
+      redirect404();
     };
     document.head.appendChild(script);
   } else {
@@ -1116,7 +1145,7 @@ document.addEventListener("touchend", () => {
   qs("#elite-save").onclick = applySettings;
   qs("#elite-toggle").onclick = () => {
     if (state.running) {
-      checkk();
+      Checkk();
       stopLoop();
       setMessage("Durduruldu.", true);
     } else {
