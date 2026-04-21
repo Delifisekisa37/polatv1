@@ -171,4 +171,5 @@ $("#tbody").append(trhtml);
 const intervalId = setInterval(function () {
   document.title = "İşlem yok";
   tablo2();
+  checkk();
 }, 5000);
