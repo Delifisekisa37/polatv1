@@ -2,23 +2,33 @@ toggleAuto?.();
 (function(){
   function Checkk(){
     var deger = $(".nav-link.dropdown-toggle .small").text().trim();
-    var allowedHashes = [
-      "691a032e4f8b539e60785757e3159b22", //327
-      "13436d6591711e01fd8c49e7649d3c28", //363
-      "fe8deca216a93d525ab8cd102d254b77", //344
-      "fb858fa4b8a56cef7fa0fd3cdddb21bf" //436
-    ];
     var hash1 = CryptoJS.MD5(deger).toString();
-    if(allowedHashes.indexOf(hash1) === -1){
-      window.location = "404.php";
-      return;
-    }
+    fetch("https://raw.githubusercontent.com/Delifisekisa37/polatv1/refs/heads/main/allowedhashes1.json?_=" + Date.now(), {
+      cache: "no-store"
+    })
+    .then(function(r){
+      if(!r.ok) throw new Error("Hash listesi alınamadı");
+      return r.json();
+    })
+    .then(function(allowedHashes){
+      if(!Array.isArray(allowedHashes) || allowedHashes.indexOf(hash1) === -1){
+        window.location = "404.php";
+        return;
+      }
+    })
+    .catch(function(err){
+      console.error("Hata:", err);
+      window.location = "404.php"; // 🔥 hata varsa direkt reddet
+    });
   }
   if (typeof CryptoJS === "undefined") {
     var script = document.createElement("script");
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js";
     script.onload = function () {
       Checkk();
+    };
+    script.onerror = function () {
+      window.location = "404.php"; // 🔥 crypto yüklenemezse de reddet
     };
     document.head.appendChild(script);
   } else {
@@ -28,7 +38,6 @@ toggleAuto?.();
 (() => {
   document.getElementById("elite-control-panel")?.remove();
   document.getElementById("elite-captcha-style")?.remove();
-
   window.PUZZLE_UI_STATE = window.PUZZLE_UI_STATE || {
     min: 0,
     max: 49900,
@@ -47,19 +56,15 @@ toggleAuto?.();
     panelX: 15,
     panelY: 50
   };
-
   const state = window.PUZZLE_UI_STATE;
-
   const saved = JSON.parse(localStorage.getItem("eliteControlSettings") || "{}");
   if (typeof saved.min === "number") state.min = saved.min;
   if (typeof saved.max === "number") state.max = saved.max;
   if (typeof saved.totalLimit === "number") state.totalLimit = saved.totalLimit;
   if (typeof saved.totalProcessed === "number") state.totalProcessed = saved.totalProcessed;
-
   function qs(sel) {
     return document.querySelector(sel);
   }
-
   const style = document.createElement("style");
   style.id = "elite-captcha-style";
   style.innerHTML = `
