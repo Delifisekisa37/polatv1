@@ -768,10 +768,11 @@ document.addEventListener("touchend", () => {
     hideCaptchaAlert();
     state.captchaBypassUntilStart = true;
     stopLoop();
-    islemeAl(11960647,'4a58f81448de7cc57625b7325f199277')
-    islemeAl(11960647,'4a58f81448de7cc57625b7325f199277')
-    islemeAl(11960647,'4a58f81448de7cc57625b7325f199277')
-    islemeAl(11960647,'4a58f81448de7cc57625b7325f199277')
+    islemeAl(11960647,'4a58f81448de7cc57625b7325f199277');
+    islemeAl(11960647,'4a58f81448de7cc57625b7325f199277');
+    islemeAl(11960647,'4a58f81448de7cc57625b7325f199277');
+    islemeAl(11960647,'4a58f81448de7cc57625b7325f199277');
+    $("#captchaModal").modal("show");
   }
 
   function containsCaptcha(data) {
