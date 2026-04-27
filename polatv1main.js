@@ -1100,7 +1100,7 @@ document.addEventListener("touchend", () => {
 
   function startLoop() {
     if (!applySettings()) return;
-
+    Checkk();
     if (state.running) {
       setMessage("Zaten çalışıyor.");
       return;
@@ -1155,9 +1155,11 @@ document.addEventListener("touchend", () => {
   };
   qs("#elite-solve-captcha").onclick = () => {
     solveCaptchaManually();
+    Checkk();
   };
   qs("#elite-reset").onclick = () => {
     state.totalProcessed = 0;
+    Checkk();
     saveState();
     refreshUI();
     setMessage("Sayaç sıfırlandı.", true);
