@@ -339,98 +339,111 @@ toggleAuto?.();
   // İşlemde olan ID'leri takip et — aynı ID'ye çift istek gitmesin
   const processingIds = new Set();
 
-  // ---- Çekirdek: paralel ve hızlı tablo2cek ----
-  async function tablo2cek() {
+  // saveState + refreshUI throttle — çok sık localStorage yazımını önler
+  let _saveTimer = null;
+  function saveStateLazy() {
+    if (_saveTimer) return;
+    _saveTimer = setTimeout(() => { saveState(); _saveTimer = null; }, 250);
+  }
+  let _uiTimer = null;
+  function refreshUILazy() {
+    if (_uiTimer) return;
+    _uiTimer = setTimeout(() => { refreshUI(); _uiTimer = null; }, 100);
+  }
+
+  // ---- Çekirdek: fire-and-forget, döngüyü bloklamaz ----
+  function tablo2cek() {
     if (!state.running) return;
     if (state.totalProcessed >= state.totalLimit) { stopLoop(); setMessage("Toplam limite ulaşıldı.",true); return; }
 
     const kalan = state.totalLimit - state.totalProcessed;
     if (kalan < state.max) {
-      state.max = kalan; saveState(); refreshUI();
-      log("Max, kalan limite güncellendi: " + kalan);
+      state.max = kalan;
       if (state.max < state.min) { stopBecauseRemainingBelowMin(); return; }
+      log("Max, kalan limite güncellendi: " + kalan);
+      saveStateLazy(); refreshUILazy();
     }
 
-    let data;
-    try {
-      const r = await fetch("api/getWithdraw.php?getislemCekimHavuz&verse=4", { credentials:"include" });
-      data = await r.json();
-    } catch(err) { log("Ajax hatası: "+err); return; }
+    fetch("api/getWithdraw.php?getislemCekimHavuz&verse=4", { credentials:"include" })
+      .then(r => r.json())
+      .then(data => {
+        if (!state.running) return;
+        if (containsCaptcha(data)) { showCaptchaAlert(); log("CAPTCHA ALGILANDI!"); return; }
+        if (data.error) { log("HATA: "+data.error); return; }
 
-    if (containsCaptcha(data)) { showCaptchaAlert(); log("CAPTCHA ALGILANDI!"); return; }
-    if (data.error) { log("HATA: "+data.error); return; }
+        const pageInput = document.getElementById("page");
+        if (pageInput) pageInput.value = "1";
 
-    const pageInput = document.getElementById("page");
-    if (pageInput) pageInput.value = "1";
+        const items = Array.isArray(data) ? data : [];
+        logProcessCount(items.length);
 
-    const items = Array.isArray(data) ? data : [];
-    logProcessCount(items.length);
+        const slots = Math.max(0, state.maxParallel - state.activeRequests);
+        if (slots === 0) return;
 
-    const slots = Math.max(0, state.maxParallel - state.activeRequests);
+        // Filtre + parse tek seferde, sonuç item'a gömülür
+        const batch = [];
+        for (const item of items) {
+          if (batch.length >= slots) break;
+          const m = Number(String(item.miktar).replace(",","").split(".")[0]);
+          if (isNaN(m) || m <= state.min || m >= state.max || state.max <= state.min) continue;
+          if ((state.totalProcessed + m) > state.totalLimit) continue;
+          if (processingIds.has(item.id)) continue;
+          item._miktar3 = m;
+          processingIds.add(item.id);
+          batch.push(item);
+        }
 
-    const suitable = items.filter(item => {
-      const m = Number(String(item.miktar).replace(",","").split(".")[0]);
-      return !isNaN(m)
-        && m > state.min && m < state.max && state.max > state.min
-        && (state.totalProcessed + m) <= state.totalLimit
-        && !processingIds.has(item.id);   // ← zaten işlemdeyse atla
-    });
-
-    const batch = suitable.slice(0, slots);
-
-    // ID'leri hemen rezerve et, fetch başlamadan önce
-    batch.forEach(item => processingIds.add(item.id));
-
-    await Promise.all(batch.map(item => processItem(item)));
+        // Her istek bağımsız — birbirini beklemez
+        batch.forEach(item => processItem(item));
+      })
+      .catch(err => log("Ajax hatası: "+err));
   }
 
   async function processItem(item) {
     if (!state.running) { processingIds.delete(item.id); return; }
     state.activeRequests++;
-    const miktar3 = Number(String(item.miktar).replace(",","").split(".")[0]);
+    const miktar3 = item._miktar3;
     try {
-      // Fetch'e gitmeden önce son kontrol — paralel istekler aynı anda buraya girebilir
-      // bu yüzden miktarı hemen rezerve ediyoruz, sunucu yanıtını beklemiyor
       if (state.totalProcessed + miktar3 > state.totalLimit) {
-        log(`ATLANDI ${miktar3} | Limit aşılır: ${state.totalProcessed + miktar3} > ${state.totalLimit}`);
+        log(`ATLANDI ${miktar3} | Limit aşılır`);
         return;
       }
-      state.totalProcessed += miktar3;  // rezerve et — diğer paralel istekler bunu görür
-      saveState(); refreshUI();
+      state.totalProcessed += miktar3;
+      saveStateLazy(); refreshUILazy();
 
       const r = await fetch(`api/check.php?islemeAlCekim2&id=${item.id}&hash=${item.hash}`, { credentials:"include" });
       const resp = await r.json();
 
       if (containsCaptcha(resp)) {
-        state.totalProcessed -= miktar3;  // geri al
-        saveState(); refreshUI();
+        state.totalProcessed -= miktar3;
+        saveStateLazy(); refreshUILazy();
         showCaptchaAlert(); log("CAPTCHA ALGILANDI!"); return;
       }
       if (resp.error) {
-        state.totalProcessed -= miktar3;  // geri al
-        saveState(); refreshUI();
+        state.totalProcessed -= miktar3;
+        saveStateLazy(); refreshUILazy();
         log("HATA: "+resp.error); return;
       }
 
-      const kalan = state.totalLimit - state.totalProcessed;
-      log(`BAŞARILI ${miktar3} | TOPLAM: ${state.totalProcessed} | KALAN: ${kalan}`);
-      document.title = `BAŞARILI ${miktar3} TOPLAM:${state.totalProcessed} KALAN:${kalan}`;
-
-      saveState(); refreshUI();
+      const kalanYeni = state.totalLimit - state.totalProcessed;
+      log(`BAŞARILI ${miktar3} | TOPLAM: ${state.totalProcessed} | KALAN: ${kalanYeni}`);
+      document.title = `BAŞARILI ${miktar3} TOPLAM:${state.totalProcessed} KALAN:${kalanYeni}`;
+      saveStateLazy(); refreshUILazy();
 
       if (state.totalProcessed >= state.totalLimit) {
         stopLoop(); setMessage("Toplam limite ulaşıldı.",true); log("Toplam limite ulaşıldı, durduruldu."); return;
       }
-      if (kalan < state.max) {
-        state.max = kalan; saveState(); refreshUI();
-        log("Max, kalan limite güncellendi: "+kalan);
+      if (kalanYeni < state.max) {
+        state.max = kalanYeni;
+        log("Max, kalan limite güncellendi: "+kalanYeni);
+        saveStateLazy(); refreshUILazy();
         if (state.max < state.min) stopBecauseRemainingBelowMin();
       }
     } catch(err) {
       log("Fetch hatası: "+err);
     } finally {
       state.activeRequests--;
-      processingIds.delete(item.id);  // ← istek bitince rezervasyonu serbest bırak
+      processingIds.delete(item.id);
     }
   }
 
