@@ -1126,7 +1126,7 @@ document.addEventListener("touchend", () => {
     setMessage("Çalışma başlatıldı.", true);
 
     runTask();
-    state.timer = setInterval(runTask, 5200);
+    state.timer = setInterval(runTask, 4200);
   }
 
   window.startLoop = startLoop;
